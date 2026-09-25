@@ -2,9 +2,9 @@
 
 # 🐰 dr2-save-bridge
 
-**Перенос сохранений Danganronpa 2: Goodbye Despair с PSP на PC (Steam)**
+**Transferring Danganronpa 2: Goodbye Despair saves from PSP to PC (Steam)**
 
-Сюжет, флаги, предметы, Мономонеты, время игры — в слот PC-версии, как будто вы играли там.
+Story progress, flags, items, Monocoins, playtime — into a PC-version slot, as if you'd played it there.
 
 ![python](https://img.shields.io/badge/python-3.8%2B-blue) ![deps](https://img.shields.io/badge/dependencies-none-brightgreen) ![platform](https://img.shields.io/badge/PSP-NPJH50631-lightgrey) ![target](https://img.shields.io/badge/PC-Steam-black) ![license](https://img.shields.io/badge/license-MIT-green)
 
@@ -12,111 +12,111 @@
 
 ---
 
-## ✨ Что переносится
+## ✨ What gets transferred
 
 | | |
 |---|---|
-| 📖 Глава и точка сюжета | ✅ |
-| 🚩 Флаги прогресса, разблокировки | ✅ |
-| 🎒 Предметы и игровые данные | ✅ |
-| 🪙 Мономонеты | ✅ |
-| ⏱️ Время игры и число сохранений | ✅ |
-| 💬 Бэклог (история диалогов) | ⚙️ по выбору: последние 9 строк с PSP или пусто |
-| ⚙️ Настройки (сложность, звук) | берутся из PC-сейва |
+| 📖 Chapter and story point | ✅ |
+| 🚩 Progress flags, unlocks | ✅ |
+| 🎒 Items and game data | ✅ |
+| 🪙 Monocoins | ✅ |
+| ⏱️ Playtime and save count | ✅ |
+| 💬 Backlog (dialogue history) | ⚙️ optional: last 9 lines from PSP or empty |
+| ⚙️ Settings (difficulty, sound) | taken from the PC save |
 
-Проверено в игре: PSP-сейвы из главы 2 и главы 6 загружаются на PC с первой попытки.
+Tested in-game: PSP saves from Chapter 2 and Chapter 6 load on PC on the first try.
 
-## 📦 Что нужно
+## 📦 Requirements
 
-- **Python 3.8+**, больше ничего
-- PC-версия со **своим** сохранением: хотя бы один нормальный слот, из него берутся настройки
-- PSP-сейв `NPJH50631DATKG000x/DATKG.BIN`:
-  - уже расшифрованный (106 468 байт), **или**
-  - зашифрованный (106 484 байта) + ключ игры `gamekey.bin` + [`psp-save`](https://github.com/vita8328/psp-save) — см. [ниже](#-как-расшифровать-psp-сейв)
+- **Python 3.8+**, nothing else
+- A PC version with **its own** save: at least one valid slot, from which settings are taken
+- PSP save `NPJH50631DATKG000x/DATKG.BIN`:
+  - already decrypted (106,468 bytes), **or**
+  - encrypted (106,484 bytes) + the game key `gamekey.bin` + [`psp-save`](https://github.com/vita8328/psp-save) — see [below](#-how-to-decrypt-a-psp-save)
 
-## 🚀 Быстрый старт (Windows)
+## 🚀 Quick Start (Windows)
 
-1. Закройте игру.
-2. Запустите **`install.bat`**.
-3. Перетащите в окно файл PSP-сейва, укажите номер слота PC. Повторите для других сейвов, пустой Enter — готово.
-4. Решите, переносить ли бэклог (`Y`/`N`).
+1. Close the game.
+2. Run **`install.bat`**.
+3. Drag the PSP save file into the window, specify the PC slot number. Repeat for other saves, empty Enter — done.
+4. Decide whether to transfer the backlog (`Y`/`N`).
 
-Скрипт сам:
-- делает бэкап в `backups\<дата>\`;
-- проверяет контрольные суммы до и после;
-- при любой ошибке возвращает оригинальный файл.
+The script automatically:
+- makes a backup in `backups\<date>\`;
+- checks checksums before and after;
+- restores the original file on any error.
 
-Сохранения PC лежат в `%USERPROFILE%\Documents\My Games\Danganronpa2\savedata.vfs`.
+PC saves are located at `%USERPROFILE%\Documents\My Games\Danganronpa2\savedata.vfs`.
 
-## 🖥️ Командная строка
+## 🖥️ Command line
 
 ```bash
-# посмотреть слоты
+# view slots
 python dr2_save_bridge.py info savedata.vfs
-python dr2_save_bridge.py info DATKG_dec.bin        # + покажет бэклог PSP
+python dr2_save_bridge.py info DATKG_dec.bin        # + shows the PSP backlog
 
-# PSP-сейв -> слот 1 PC, без бэклога
+# PSP save -> PC slot 1, no backlog
 python dr2_save_bridge.py convert --pc-vfs savedata.vfs \
     --map 1=DATKG_dec.bin --out savedata_new.vfs
 
-# два сейва, с бэклогом, зашифрованный вход, сразу в игру (с бэкапом)
+# two saves, with backlog, encrypted input, straight into the game (with backup)
 python dr2_save_bridge.py convert --pc-vfs savedata.vfs \
     --map 1=NPJH50631DATKG0001/DATKG.BIN --map 2=NPJH50631DATKG0000/DATKG.BIN \
     --key gamekey.bin --psp-save tools/psp-save.exe \
     --backlog keep --out savedata.vfs --install
 ```
 
-| флаг | |
+| flag | |
 |---|---|
-| `--map SLOT=FILE` | номер слота PC (с 1) = PSP-сейв; можно несколько раз |
-| `--backlog clear\|keep` | `clear` (по умолчанию): пустая история; `keep`: перенести с PSP |
-| `--template-slot N` | какой PC-слот взять за основу (по умолчанию последний целый) |
-| `--key`, `--psp-save` | только для зашифрованного `DATKG.BIN` |
-| `--install` | перезаписать `--out`, сохранив рядом `*.bak` |
+| `--map SLOT=FILE` | PC slot number (starting from 1) = PSP save; can be used multiple times |
+| `--backlog clear\|keep` | `clear` (default): empty history; `keep`: transfer from PSP |
+| `--template-slot N` | which PC slot to use as the base (default: last complete one) |
+| `--key`, `--psp-save` | only needed for an encrypted `DATKG.BIN` |
+| `--install` | overwrite `--out`, keeping a `*.bak` copy alongside |
 
-## 💬 Про бэклог
+## 💬 About the backlog
 
-PSP хранит в сейве только **9 последних строк** диалога, на языке своей версии.
-В режиме `keep` они переносятся в историю PC в правильном порядке. Строки длиннее 63 символов переносятся по словам.
+The PSP save only stores the **last 9 lines** of dialogue, in the language of its version.
+In `keep` mode, they're transferred into the PC history in the correct order. Lines longer than 63 characters are wrapped by word.
 
 > [!WARNING]
-> Английская PC-версия может не отображать кириллицу или японский: строки будут пустыми или с квадратами.
-> Если с патчем шрифта всё хорошо, оставляйте `keep`. Иначе выбирайте `clear`: бэклог заполнится сам, как только вы продолжите играть.
+> The English PC version may not display Cyrillic or Japanese: the lines will appear empty or as squares.
+> If you have a working font patch, keep `keep`. Otherwise choose `clear`: the backlog will fill in on its own as soon as you continue playing.
 
-## 🔑 Как расшифровать PSP-сейв
+## 🔑 How to decrypt a PSP save
 
-1. Запустите игру в **PPSSPP** с логом уровня Debug и загрузите сейв.
-2. При загрузке в логе появится строка `Game key` (16 байт hex). Сохраните её в файл:
+1. Run the game in **PPSSPP** with logging set to Debug level and load the save.
+2. On loading, the log will show a line `Game key` (16 bytes hex). Save it to a file:
    ```bash
-   python -c "open('gamekey.bin','wb').write(bytes.fromhex('ВАШ_КЛЮЧ_HEX'))"
+   python -c "open('gamekey.bin','wb').write(bytes.fromhex('YOUR_KEY_HEX'))"
    ```
-3. Соберите [`psp-save`](https://github.com/vita8328/psp-save) и положите `psp-save.exe` в `tools\`.
+3. Build [`psp-save`](https://github.com/vita8328/psp-save) and place `psp-save.exe` into `tools\`.
 
-После этого `install.bat` и `--key/--psp-save` расшифруют сейв сами (режим 5).
+After that, `install.bat` and `--key/--psp-save` will decrypt the save automatically (mode 5).
 
-## ↩️ Откат
+## ↩️ Rollback
 
-Скопируйте `backups\<дата>\savedata.vfs` обратно в папку сохранений.
+Copy `backups\<date>\savedata.vfs` back into the saves folder.
 
-## 🔬 Как это работает
+## 🔬 How it works
 
-PC-сейв — это PSP-сейв с увеличенными массивами: окно текста 64 символа вместо 42, бэклог на 512 строк вместо 9, заголовок на 16 байт длиннее.
-Конвертер переносит данные поблочно, по карте, восстановленной из `DR2_us.exe`, и пересчитывает обе контрольные суммы.
-Всё, что зависит от языка (текущая реплика, бэклог), очищается или конвертируется отдельно.
+The PC save is a PSP save with enlarged arrays: a 64-character text window instead of 42, a 512-line backlog instead of 9, and a header 16 bytes longer.
+The converter transfers data block by block, following a map reconstructed from `DR2_us.exe`, and recalculates both checksums.
+Anything language-dependent (the current line, the backlog) is either cleared or converted separately.
 
-Подробная карта смещений: **[docs/FORMAT.md](docs/FORMAT.md)**.
+Detailed offset map: **[docs/FORMAT.md](docs/FORMAT.md)**.
 
 ```bash
-python -m unittest discover -s tests    # тесты на синтетических данных, без чужих сейвов
+python -m unittest discover -s tests    # tests on synthetic data, no third-party saves
 ```
 
-## ⚠️ Ограничения
+## ⚠️ Limitations
 
-- Проверено на PSP **NPJH50631** (японская основа, русский фан-перевод) → Steam-версия **DR2_us.exe**.
-- Обратного направления (PC → PSP) пока нет.
-- Проект не связан со Spike Chunsoft / NIS America. Сейвы, ключи и файлы игры в репозиторий не входят (см. `.gitignore`).
+- Tested on PSP **NPJH50631** (Japanese base, Russian fan translation) → Steam version **DR2_us.exe**.
+- The reverse direction (PC → PSP) is not yet available.
+- The project is not affiliated with Spike Chunsoft / NIS America. Saves, keys, and game files are not included in the repository (see `.gitignore`).
 
-## 📄 Лицензия
+## 📄 License
 
 [MIT](LICENSE) © 2026 muxira
 
