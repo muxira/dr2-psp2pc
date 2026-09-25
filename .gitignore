@@ -1,0 +1,13 @@
+# personal data: saves, keys, game files never go into git
+*.vfs
+*.bak
+*.bin
+*.BIN
+*.SFO
+*.PNG
+gamekey*
+backups/
+tools/
+*.exe
+__pycache__/
+*.pyc
