@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🐻 dr2-psp2pc
+# 🐰 dr2-psp2pc
 
 **Transferring Danganronpa 2: Goodbye Despair saves from PSP to PC (Steam)**
 
