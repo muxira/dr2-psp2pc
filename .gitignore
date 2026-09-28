@@ -6,6 +6,7 @@
 *.SFO
 *.PNG
 gamekey*
+keys.txt
 backups/
 tools/
 *.exe
